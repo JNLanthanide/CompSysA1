@@ -39,6 +39,16 @@ int print_error(char* path, int errnum) {
     path, strerror(errnum));
 }
 
+// Returns 1 if n is contained within the ASCII set (as defined in the assignment),
+//otherwise returns 0
+int check_ASCII(int n) {
+  if (!(n >= 0x07 && n <= 0x0D) && (n != 0x1B) && !(n >= 0x20 && n <= 0x7E)) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
 void DetermineFileType(FILE* f, char* path) {
   int buffer = 0;
 
@@ -48,7 +58,7 @@ void DetermineFileType(FILE* f, char* path) {
 
   while(1) {
     if (fread(&buffer, 1, 1, f) != 0) {
-      if (!(buffer >= 0x07 && buffer <= 0x0D) && (buffer != 0x1B) && !(buffer >= 0x20 && buffer <= 0x7E)) {
+      if (check_ASCII(buffer) == 0) {
         isASCII = 0;
       }
     }
