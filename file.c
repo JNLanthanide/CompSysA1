@@ -83,21 +83,22 @@ int main(int argc, char *argv[])
 {
   int retval = EXIT_SUCCESS;
 
-  if (argc != 2) {
+  if (argc < 2) {
     fprintf(stderr, "%s", "Usage: file path");
     retval = EXIT_FAILURE;
     return retval;
   }
+  for (i=1;i <= argc; i++;){
+    FILE* f = fopen(argv[i], "r");
 
-  FILE* f = fopen(argv[1], "r");
+    if (f == NULL) {
+      print_error(argv[i], errno);
+      int retval = EXIT_SUCCESS;
+      return retval;
+    }
 
-  if (f == NULL) {
-    print_error(argv[1], errno);
-    int retval = EXIT_SUCCESS;
-    return retval;
+    DetermineFileType(f, argv[i]);
   }
-
-  DetermineFileType(f, argv[1]);
 
   return retval;
 }
