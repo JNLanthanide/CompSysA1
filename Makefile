@@ -4,6 +4,9 @@ CFLAGS=-std=c11 -Wall -Werror -Wextra -pedantic -g3
 file: file.c Makefile
 	$(CC) $(CFLAGS) -o file file.c
 
+utf8: utf8.c Makefile
+	$(CC) $(CFLAGS) -o utf8 utf8.c
+
 gdb_test: file test.gdb Makefile
 	gdb -q -x test.gdb $<
 
