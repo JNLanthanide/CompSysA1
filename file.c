@@ -8,12 +8,14 @@ enum file_type {
   DATA,
   EMPTY,
   ASCII,
+  ISO,
 };
 
 char* FILE_TYPE_STRINGS[] = {
   "data",
   "empty",
   "ASCII text",
+  "ISO-8859 text",
 };
 
 char* enumToString(enum file_type ft) {
@@ -25,6 +27,9 @@ char* enumToString(enum file_type ft) {
   }
   if (ft == ASCII) {
     return FILE_TYPE_STRINGS[2];
+  }
+  if (ft == ISO) {
+    return FILE_TYPE_STRINGS[3];
   }
   return "ERROR WRONG ENUM";
 }
@@ -47,7 +52,14 @@ int check_ASCII(int n) {
   }
 }
 
-int main(int argc, char *argv[])
+int check_ISO(int n) {
+  if (!(n >= 160 && n <= 255) && check_ASCII(n) == 0) {
+    return 0;
+  }
+  return 1;
+}
+
+int main(int argc, char* argv[])
 {
   int retval = EXIT_SUCCESS;
 
@@ -65,32 +77,65 @@ int main(int argc, char *argv[])
     return retval;
   }
 
-  int buffer = 0;
-
+  //int buffer = 0;
+/*
   int i = 0;
 
   int isASCII = 1;
 
+  int isISO = 1;
+*/
+  int bom[4];
+
+
+  for (int i = 0; i < 4; i++) {
+    fread(&bom[i], 1, 1, f);
+  }
+  printf("%d\n", bom[1]);
+  printf("%d\n", 0xFF);
+  if (bom[0] == 0xef && bom[1] == 0xbb && bom[2] == 0xbf) {
+    print_result(argv[1], ISO);
+  }
+
+
+
+  /*
   while(1) {
     if (fread(&buffer, 1, 1, f) != 0) {
+      if (check_ISO(buffer) == 0) {
+        isISO = 0;
+      }
       if (check_ASCII(buffer) == 0) {
         isASCII = 0;
       }
     }
     else {
-      if (i == 0) {
-        print_result(argv[1], EMPTY);
-      } else {
-        if (isASCII == 1) {
+      if (i == 0)
+      {
+          print_result(argv[1], EMPTY);
+      }
+      else
+      {
+        if (isASCII == 1)
+        {
           print_result(argv[1], ASCII);
         }
-        else {
-          print_result(argv[1], DATA);
+        else
+        {
+          if (isISO == 1)
+          {
+            print_result(argv[1], ISO);
+          }
+          else
+          {
+            print_result(argv[1], DATA);
+          }
         }
       }
       break;
     }
     i++;
   }
+  */
   return retval;
 }
