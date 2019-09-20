@@ -9,6 +9,7 @@ int print_error(char* path, int errnum) {
     path, strerror(errnum));
 }
 
+
 int is4Byte(signed char n) {
   if (((n>>3)&1) == 0 && ((n>>4)&1) == 1 && ((n>>5)&1) == 1 && ((n>>6)&1) == 1 &&  ((n>>7)&1) == 1) {
     return 1;
@@ -19,7 +20,7 @@ int is4Byte(signed char n) {
 }
 
 int is3Byte(signed char n) {
-  if (((buffer>>4)&1) == 0 && ((buffer>>5)&1) == 1 && ((buffer>>6)&1) == 1 &&  ((buffer>>7)&1) == 1) {
+  if (((n>>4)&1) == 0 && ((n>>5)&1) == 1 && ((n>>6)&1) == 1 &&  ((n>>7)&1) == 1) {
     return 1;
   }
   else {
@@ -28,7 +29,7 @@ int is3Byte(signed char n) {
 }
 
 int is2Byte(signed char n) {
-  if (((buffer>>5)&1) == 0 && ((buffer>>6)&1) == 1 &&  ((buffer>>7)&1) == 1) {
+  if (((n>>5)&1) == 0 && ((n>>6)&1) == 1 &&  ((n>>7)&1) == 1) {
     return 1;
   }
   else {
@@ -37,7 +38,7 @@ int is2Byte(signed char n) {
 }
 
 int is1Byte(signed char n) {
-  if (((buffer>>7)&1) == 0) {
+  if (((n>>7)&1) == 0) {
     return 1;
   }
   else {
@@ -45,8 +46,8 @@ int is1Byte(signed char n) {
   }
 }
 
-int uf810byte(signed char n) {
-  if (((buffer>>6)&1) == 0 && ((buffer>>7)&1) == 1) {
+int isFollowByte (signed char n) {
+  if (((n>>6)&1) == 0 && ((n>>7)&1) == 1) {
     return 1;
   }
   else {
@@ -103,7 +104,7 @@ while (1) {
           }
           else
           {
-            if (is1Byte == 1)
+            if (is1Byte(buffer) == 1)
             {
                 nBytes = 0;
                 printf("%s%d%s%d", "  1 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
@@ -114,14 +115,14 @@ while (1) {
     }
     else
     {
-      if (is4Byte == 1)
+      if (is4Byte(buffer) == 1)
       {
           isUTF8 = 0;
           printf("%s%d%s%d", "  4 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
       }
       else
       {
-        if (is3Byte == 1)
+        if (is3Byte(buffer) == 1)
         {
             isUTF8 = 0;
             printf("%s%d%s%d", "  3 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
@@ -142,7 +143,7 @@ while (1) {
             }
             else
             {
-                if (isUTF810Byte(buffer) == 1)
+                if (isFollowByte(buffer) == 1)
                 {
                   nBytes--;
                     printf("%s%d%s%d", "  1 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
