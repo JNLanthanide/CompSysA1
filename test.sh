@@ -122,6 +122,9 @@ file    ${f} | sed 's/ASCII text.*/ASCII text/' > test_files/expected
 file "NoPath" > test_files/expected
 ./file  "NoPath" > test_files/actual
 
+file "" > test_files/expected
+./file "" > test_files/actual
+
 if ! diff -u test_files/expected test_files/actual
 then
   echo ">>> Failed :-("
