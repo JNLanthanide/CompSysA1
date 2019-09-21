@@ -4,10 +4,12 @@
 #include <errno.h>
 #include <string.h>
 
+// Macros as defined in the assignment:
 #define UTF8_4B(n) ((((n)>>3)&1) == 0 && (((n)>>4)&1) == 1 && (((n)>>5)&1) == 1 && (((n)>>6)&1) == 1 &&  (((n)>>7)&1) == 1) ? 1 : 0
 #define UTF8_3B(n) ((((n)>>4)&1) == 0 && (((n)>>5)&1) == 1 && (((n)>>6)&1) == 1 &&  (((n)>>7)&1) == 1) ? 1 : 0
 #define UTF8_2B(n) ((((n)>>5)&1) == 0 && (((n)>>6)&1) == 1 &&  (((n)>>7)&1) == 1) ? 1 : 0
 #define UTF8_CONT(n) ((((n)>>6)&1) == 0 && (((n)>>7)&1) == 1) ? 1 : 0
+// This macro returns true if the byte ends with a 0:
 #define UTF8_1b(n) (((n>>7)&1) == 0) ? 1 : 0
 
 enum file_type {
@@ -20,6 +22,8 @@ enum file_type {
   UTF16LE,
 };
 
+
+// "with no line terminators" added to UTF16LE and UTF16BE for testing reasons.
 char* FILE_TYPE_STRINGS[] = {
   "data",
   "empty",
@@ -66,6 +70,7 @@ int print_error(const char* path, int max_length, int errnum) {
   path, max_length - (int) strlen(path) + 1, " ", strerror(errnum));
 }
 
+// Checks the BOM of a file, returns 1 if its UTF16LE encoded, 2 if its uTF16BE encoded, otherwise returns 0:
 int check_UTF16(FILE* f) {
   rewind(f);
   unsigned char c[2];
@@ -83,16 +88,19 @@ int check_UTF16(FILE* f) {
   return isUTF16;
 }
 
+// Runs through file, returns 1 if its UTF8 Encoded, otherwise returns 0:
 int check_UTF8(FILE* f) {
   rewind(f);
+  // Int keeping track, whether to expect a UTF8 - 2byte,3byte,4byte or a continuation byte.
   int nBytes = 0;
   int isUTF8 = 1;
+  //is 0 if there are no UTF8 2byte,3byte or 4bytes in the entire file.
   int UTFEncoded = 0;
   int retValue;
   signed char buffer = 0;
   while (1) {
     if (fread(&buffer, 1, 1, f) != 0) {
-      if (nBytes == 0) {
+      if (nBytes == 0) { // If we are not expecting UTF8_CONT bytes:
         if (UTF8_4B(buffer) == 1)
         {
             nBytes = 3;
@@ -122,7 +130,7 @@ int check_UTF8(FILE* f) {
           }
         }
       }
-      else
+      else //If we are expecting UTF8_CONT bytes:
       {
         if (UTF8_4B(buffer) == 1)
         {
@@ -158,8 +166,10 @@ int check_UTF8(FILE* f) {
         }
       }
     }
-    else // DID NOT READ CHAR
+    else
     {
+      // If we are not expecting continuation bytes, the UTF8 format was not broken,
+      // and we encountered at least one 2byte, 3byte or 4byte.
       if (nBytes == 0 && isUTF8 == 1 && UTFEncoded == 1) {
         retValue = 1;
       }
@@ -173,6 +183,8 @@ int check_UTF8(FILE* f) {
   return retValue;
 }
 
+// Returns 1 if n is within the ASCII set as defined in the assignment.
+// Otherwise returns 0
 int isASCIIChar(int n) {
   if (!(n >= 0x07 && n <= 0x0D) && (n != 0x1B) && !(n >= 0x20 && n <= 0x7E)) {
     return 0;
@@ -180,6 +192,8 @@ int isASCIIChar(int n) {
     return 1;
   }
 }
+// Returns 1 if every byte in f is within the ASCII set
+// Oterwise returns 0
 int check_ASCIIOrEmpty(FILE* f) {
   rewind(f);
   int i = 0;
@@ -201,6 +215,8 @@ int check_ASCIIOrEmpty(FILE* f) {
   return 1;
 }
 
+// Returns 1 if n is within the ASCII or the ISO set as defined in the assignment
+// Otherwise returns 0
 int isISOChar(int n) {
   if (!(n >= 160 && n <= 255) && isASCIIChar(n) == 0) {
     return 0;
@@ -208,6 +224,8 @@ int isISOChar(int n) {
   return 1;
 }
 
+// Returns 1 if every byte in f is within the ISO or ASCII set.
+// Otherwise returns 0
 int check_ISO(FILE* f) {
   rewind(f);
   int buffer = 1;
@@ -224,6 +242,7 @@ int check_ISO(FILE* f) {
   return 1;
 }
 
+
 int main(int argc, char* argv[])
 {
   int retval = EXIT_SUCCESS;
@@ -232,12 +251,14 @@ int main(int argc, char* argv[])
     retval = EXIT_FAILURE;
     return retval;
   }
+
   int longestPath = 0;
   for (int i = 1; i < (argc); i++) {
     if ((int) strlen(argv[i]) > longestPath) {
       longestPath = strlen(argv[i]);
     }
   }
+
   for (int j = 1; j < argc; j++) {
     FILE* f = fopen(argv[j], "r");
     if (f == NULL) {
