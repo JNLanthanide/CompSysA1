@@ -25,9 +25,9 @@ char* FILE_TYPE_STRINGS[] = {
   "empty",
   "ASCII text",
   "ISO-8859 text",
-  "UTF8 text",
-  "UTF16 Big Endian text",
-  "UTF16 Little Endian text",
+  "UTF-8 Unicode text",
+  "Big-endian UTF-16 Unicode text, with no line terminators",
+  "Little-endian UTF-16 Unicode text, with no line terminators",
 };
 
 char* enumToString(enum file_type ft) {
@@ -55,15 +55,15 @@ char* enumToString(enum file_type ft) {
   return "ERROR WRONG ENUM";
 }
 
-int print_result(const char* path, size_t max_length, enum file_type ft) {
+int print_result(const char* path, int max_length, enum file_type ft) {
     return fprintf(stdout, "%s:%*s%s\n",
-    path, (int) (max_length - strlen(path)), " ", enumToString(ft));
+    path, (int) (max_length - strlen(path) + 1), " ", enumToString(ft));
 }
 
 
 int print_error(const char* path, int max_length, int errnum) {
   return fprintf(stdout, "%s:%*scannot determine (%s)\n",
-  path, max_length - (int) strlen(path), " ", strerror(errnum));
+  path, max_length - (int) strlen(path) + 1, " ", strerror(errnum));
 }
 
 int check_UTF16(FILE* f) {
@@ -72,7 +72,7 @@ int check_UTF16(FILE* f) {
   int isUTF16 = 0;
   if ((fread(&c, sizeof(char), sizeof(c), f) != 0) != 0) {
     if (c[0] == 0xFE && c[1] == 0xFF) {
-      isUTF16 = 1;
+      isUTF16 = 2;
     }
     else {
       if (c[0] == 0xFF && c[1] == 0xFE) {
@@ -232,7 +232,7 @@ int main(int argc, char* argv[])
     retval = EXIT_FAILURE;
     return retval;
   }
-  int longestPath = strlen(argv[1]);
+  int longestPath = 0;
   for (int i = 1; i < (argc); i++) {
     if ((int) strlen(argv[i]) > longestPath) {
       longestPath = strlen(argv[i]);
@@ -255,21 +255,26 @@ int main(int argc, char* argv[])
       }
       else
       {
-        if (check_ISO(f) == 1) {
-          print_result(argv[j], longestPath, ISO);
+        if (check_UTF8(f) == 1) {
+          print_result(argv[j], longestPath, UTF8);
         }
         else
         {
-          if (check_UTF8(f) == 1) {
-            print_result(argv[j], longestPath, UTF8);
+          if (check_UTF16(f) == 1) {
+            print_result(argv[j], longestPath, UTF16LE);
           }
           else
           {
-            if (check_UTF16(f) == 1) {
+            if (check_UTF16(f) == 2) {
               print_result(argv[j], longestPath, UTF16BE);
             }
             else {
-              print_result(argv[j], longestPath, DATA);
+              if (check_ISO(f) == 1) {
+                print_result(argv[j], longestPath, ISO);
+              }
+              else {
+                print_result(argv[j], longestPath, DATA);
+              }
             }
           }
         }

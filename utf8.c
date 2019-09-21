@@ -75,6 +75,7 @@ if (f == NULL) {
 
 int nBytes = 0;
 int isUTF8 = 1;
+int utf8encoded = 0;
 int test = 0;
 signed char buffer = 0;
 while (1) {
@@ -88,7 +89,8 @@ while (1) {
       {
           test = 1;
           nBytes = 3;
-          printf("%s%d%s%d", "  4 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+          utf8encoded = 1;
+          printf("%s%d%s%d%s%d", "  4 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
       }
       else
       {
@@ -96,7 +98,8 @@ while (1) {
         {
             nBytes = 2;
             test = 1;
-            printf("%s%d%s%d", "  3 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+            utf8encoded = 1;
+            printf("%s%d%s%d%s%d", "  3 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
         }
         else
         {
@@ -104,14 +107,15 @@ while (1) {
           {
               nBytes = 1;
               test = 1;
-              printf("%s%d%s%d", "  2 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+              utf8encoded = 1;
+              printf("%s%d%s%d%s%d", "  2 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
           }
           else
           {
             if (is1Byte(buffer) == 1)
             {
                 nBytes = 0;
-                printf("%s%d%s%d", "  1 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+                printf("%s%d%s%d%s%d", "  1 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
             }
           }
         }
@@ -122,35 +126,35 @@ while (1) {
       if (is4Byte(buffer) == 1)
       {
           isUTF8 = 0;
-          printf("%s%d%s%d", "  4 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+          printf("%s%d%s%d%s%d", "  4 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
       }
       else
       {
         if (is3Byte(buffer) == 1)
         {
             isUTF8 = 0;
-            printf("%s%d%s%d", "  3 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+            printf("%s%d%s%d%s%d", "  3 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
         }
         else
         {
           if (is2Byte(buffer) == 1)
           {
               isUTF8 = 0;
-              printf("%s%d%s%d", "  2 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+              printf("%s%d%s%d%s%d", "  2 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
           }
           else
           {
             if (is1Byte(buffer) == 1)
             {
                 isUTF8 = 0;
-                printf("%s%d%s%d", "  1 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+                printf("%s%d%s%d%s%d", "  1 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
             }
             else
             {
                 if (isFollowByte(buffer) == 1)
                 {
                   nBytes--;
-                    printf("%s%d%s%d", "  1 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
+                    printf("%s%d%s%d%s%d", "  Cont Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8, "  ENCODED = ", utf8encoded);
                 }
             }
           }
@@ -162,7 +166,7 @@ while (1) {
   else // DID NOT READ CHAR
   {
     printf("%s%d\n", "TEST = ", test);
-    if (nBytes == 0 && isUTF8 == 1 && test == 1) {
+    if (nBytes == 0 && isUTF8 == 1 && test == 1 && utf8encoded == 1) {
       printf("%s\n", "ITS FUCKING UTF8");
     }
     else
