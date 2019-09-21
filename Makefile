@@ -7,6 +7,9 @@ file: file.c Makefile
 utf8: utf8.c Makefile
 	$(CC) $(CFLAGS) -o utf8 utf8.c
 
+utf16: utf16.c Makefile
+	$(CC) $(CFLAGS) -o utf16 utf16.c
+
 gdb_test: file test.gdb Makefile
 	gdb -q -x test.gdb $<
 

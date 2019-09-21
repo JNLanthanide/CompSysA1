@@ -36,6 +36,8 @@ printf "\0x19" > test_files/data10.input
 printf "\0x18" > test_files/data11.input
 printf "\0x17" > test_files/data12.input
 
+printf "§" > test_files/ISO1.input
+
 printf "" > test_files/empty.input
 
 

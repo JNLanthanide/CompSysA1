@@ -4,6 +4,12 @@
 #include <errno.h>
 #include <string.h>
 
+#define UTF8_4B(n) ((((n)>>3)&1) == 0 && (((n)>>4)&1) == 1 && (((n)>>5)&1) == 1 && (((n)>>6)&1) == 1 &&  (((n)>>7)&1) == 1) ? 1 : 0
+#define UTF8_3B(n) ((((n)>>4)&1) == 0 && (((n)>>5)&1) == 1 && (((n)>>6)&1) == 1 &&  (((n)>>7)&1) == 1) ? 1 : 0
+#define UTF8_2B(n) ((((n)>>5)&1) == 0 && (((n)>>6)&1) == 1 &&  (((n)>>7)&1) == 1) ? 1 : 0
+#define UTF8_CONT(n) ((((n)>>6)&1) == 0 && (((n)>>7)&1) == 1) ? 1 : 0
+#define UTF8_1b(n) (((n>>7)&1) == 0) ? 1 : 0
+
 enum file_type {
   DATA,
   EMPTY,
@@ -49,60 +55,15 @@ char* enumToString(enum file_type ft) {
   return "ERROR WRONG ENUM";
 }
 
-int print_result(const char* path, int max_length, enum file_type ft) {
+int print_result(const char* path, size_t max_length, enum file_type ft) {
     return fprintf(stdout, "%s:%*s%s\n",
-    path, max_length - (int) strlen(path), " ", enumToString(ft));
+    path, (int) (max_length - strlen(path)), " ", enumToString(ft));
 }
 
 
 int print_error(const char* path, int max_length, int errnum) {
   return fprintf(stdout, "%s:%*scannot determine (%s)\n",
   path, max_length - (int) strlen(path), " ", strerror(errnum));
-}
-
-int is4Byte(signed char n) {
-  if (((n>>3)&1) == 0 && ((n>>4)&1) == 1 && ((n>>5)&1) == 1 && ((n>>6)&1) == 1 &&  ((n>>7)&1) == 1) {
-    return 1;
-  }
-  else {
-    return 0;
-  }
-}
-
-int is3Byte(signed char n) {
-  if (((n>>4)&1) == 0 && ((n>>5)&1) == 1 && ((n>>6)&1) == 1 &&  ((n>>7)&1) == 1) {
-    return 1;
-  }
-  else {
-    return 0;
-  }
-}
-
-int is2Byte(signed char n) {
-  if (((n>>5)&1) == 0 && ((n>>6)&1) == 1 &&  ((n>>7)&1) == 1) {
-    return 1;
-  }
-  else {
-    return 0;
-  }
-}
-
-int is1Byte(signed char n) {
-  if (((n>>7)&1) == 0) {
-    return 1;
-  }
-  else {
-    return 0;
-  }
-}
-
-int isFollowByte (signed char n) {
-  if (((n>>6)&1) == 0 && ((n>>7)&1) == 1) {
-    return 1;
-  }
-  else {
-    return 0;
-  }
 }
 
 int check_UTF16(FILE* f) {
@@ -126,30 +87,34 @@ int check_UTF8(FILE* f) {
   rewind(f);
   int nBytes = 0;
   int isUTF8 = 1;
+  int UTFEncoded = 0;
   int retValue;
   signed char buffer = 0;
   while (1) {
     if (fread(&buffer, 1, 1, f) != 0) {
       if (nBytes == 0) {
-        if (is4Byte(buffer) == 1)
+        if (UTF8_4B(buffer) == 1)
         {
             nBytes = 3;
+            UTFEncoded = 1;
         }
         else
         {
-          if (is3Byte(buffer) == 1)
+          if (UTF8_3B(buffer) == 1)
           {
               nBytes = 2;
+              UTFEncoded = 1;
           }
           else
           {
-            if (is2Byte(buffer) == 1)
+            if (UTF8_2B(buffer) == 1)
             {
                 nBytes = 1;
+                UTFEncoded = 1;
             }
             else
             {
-              if (is1Byte(buffer) == 1)
+              if (UTF8_1b(buffer) == 1)
               {
                   nBytes = 0;
               }
@@ -159,31 +124,31 @@ int check_UTF8(FILE* f) {
       }
       else
       {
-        if (is4Byte(buffer) == 1)
+        if (UTF8_4B(buffer) == 1)
         {
             isUTF8 = 0;
         }
         else
         {
-          if (is3Byte(buffer) == 1)
+          if (UTF8_3B(buffer) == 1)
           {
               isUTF8 = 0;
           }
           else
           {
-            if (is2Byte(buffer) == 1)
+            if (UTF8_2B(buffer) == 1)
             {
                 isUTF8 = 0;
             }
             else
             {
-              if (is1Byte(buffer) == 1)
+              if (UTF8_1b(buffer) == 1)
               {
                   isUTF8 = 0;
               }
               else
               {
-                  if (isFollowByte(buffer) == 1)
+                  if (UTF8_CONT(buffer) == 1)
                   {
                     nBytes--;
                   }
@@ -195,7 +160,7 @@ int check_UTF8(FILE* f) {
     }
     else // DID NOT READ CHAR
     {
-      if (nBytes == 0 && isUTF8 == 1) {
+      if (nBytes == 0 && isUTF8 == 1 && UTFEncoded == 1) {
         retValue = 1;
       }
       else
@@ -215,16 +180,21 @@ int isASCIIChar(int n) {
     return 1;
   }
 }
-int check_ASCII(FILE* f) {
+int check_ASCIIOrEmpty(FILE* f) {
   rewind(f);
+  int i = 0;
   int buffer = 1;
   while(1) {
     if (fread(&buffer, sizeof(char), 1, f) != 0) {
+      i++;
       if (isASCIIChar(buffer) == 0) {
         return 0;
       }
     }
     else {
+      if (i == 0) {
+        return -1;
+      }
       break;
     }
   }
@@ -257,42 +227,55 @@ int check_ISO(FILE* f) {
 int main(int argc, char* argv[])
 {
   int retval = EXIT_SUCCESS;
-
-    if (argc < 2) {
-      fprintf(stderr, "%s", "Usage: file path");
-      retval = EXIT_FAILURE;
-      return retval;
+  if (argc < 2) {
+    fprintf(stderr, "%s", "Usage: file path");
+    retval = EXIT_FAILURE;
+    return retval;
+  }
+  int longestPath = strlen(argv[1]);
+  for (int i = 1; i < (argc); i++) {
+    if ((int) strlen(argv[i]) > longestPath) {
+      longestPath = strlen(argv[i]);
     }
-
-    FILE* f = fopen(argv[1], "r");
-
+  }
+  for (int j = 1; j < argc; j++) {
+    FILE* f = fopen(argv[j], "r");
     if (f == NULL) {
-      print_error(argv[1], 4, errno);
+      print_error(argv[j], longestPath, errno);
       int retval = EXIT_SUCCESS;
       return retval;
     }
-
-    if (check_ASCII(f) == 1) {
-      print_result(argv[1], 4, ASCII);
+    if (check_ASCIIOrEmpty(f) == 1) {
+      print_result(argv[j], longestPath, ASCII);
     }
     else
     {
-      if (check_ISO(f) == 1) {
-        print_result(argv[1], 4, ISO);
+      if(check_ASCIIOrEmpty(f) == -1) {
+        print_result(argv[j], longestPath, EMPTY);
       }
       else
       {
-        if (check_UTF8(f) == 1) {
-          print_result(argv[1], 4, UTF8);
+        if (check_ISO(f) == 1) {
+          print_result(argv[j], longestPath, ISO);
         }
         else
         {
-          if (check_UTF16(f) == 1) {
-            print_result(argv[1], 4, UTF16BE);
+          if (check_UTF8(f) == 1) {
+            print_result(argv[j], longestPath, UTF8);
+          }
+          else
+          {
+            if (check_UTF16(f) == 1) {
+              print_result(argv[j], longestPath, UTF16BE);
+            }
+            else {
+              print_result(argv[j], longestPath, DATA);
+            }
           }
         }
       }
     }
-  fclose(f);
+    fclose(f);
+  }
   return retval;
 }

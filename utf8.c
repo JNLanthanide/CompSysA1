@@ -75,6 +75,7 @@ if (f == NULL) {
 
 int nBytes = 0;
 int isUTF8 = 1;
+int test = 0;
 signed char buffer = 0;
 while (1) {
   if (fread(&buffer, 1, 1, f) != 0) {
@@ -85,6 +86,7 @@ while (1) {
     if (nBytes == 0) {
       if (is4Byte(buffer) == 1)
       {
+          test = 1;
           nBytes = 3;
           printf("%s%d%s%d", "  4 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
       }
@@ -93,6 +95,7 @@ while (1) {
         if (is3Byte(buffer) == 1)
         {
             nBytes = 2;
+            test = 1;
             printf("%s%d%s%d", "  3 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
         }
         else
@@ -100,6 +103,7 @@ while (1) {
           if (is2Byte(buffer) == 1)
           {
               nBytes = 1;
+              test = 1;
               printf("%s%d%s%d", "  2 Bytes, nBytes = ", nBytes, "  isUTF8 = ", isUTF8);
           }
           else
@@ -157,7 +161,8 @@ while (1) {
   }
   else // DID NOT READ CHAR
   {
-    if (nBytes == 0 && isUTF8 == 1) {
+    printf("%s%d\n", "TEST = ", test);
+    if (nBytes == 0 && isUTF8 == 1 && test == 1) {
       printf("%s\n", "ITS FUCKING UTF8");
     }
     else
